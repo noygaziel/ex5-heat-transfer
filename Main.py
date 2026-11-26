@@ -31,6 +31,11 @@ class HeatTransfer(QWidget):
         self.time_step = 0.05          # [s]
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_method)
+        # history of the experiment (for the graph window)
+        self.current_time = 0.0
+        self.time_history = []
+        self.body1_temp_history = []
+        self.body2_temp_history = []
 
         self.setupUI()
 
@@ -188,6 +193,11 @@ class HeatTransfer(QWidget):
                               self.left_slider.value())
             self.body2 = Body(self.right_mass_spin.value(), self.right_capacity_spin.value(),
                               self.right_slider.value())
+            # new experiment - reset the history and save the starting point
+            self.current_time = 0.0
+            self.time_history = [0.0]
+            self.body1_temp_history = [self.body1.temperature]
+            self.body2_temp_history = [self.body2.temperature]
             self.start_button.setText("Stop")
             self.timer.start(int(self.time_step * 1000))   # [ms]
         else:
@@ -206,6 +216,12 @@ class HeatTransfer(QWidget):
         q2 = i2 * self.time_step
         new_t1 = self.body1.add_heat(q1)
         new_t2 = self.body2.add_heat(q2)
+
+        # save the data for the graph
+        self.current_time += self.time_step
+        self.time_history.append(self.current_time)
+        self.body1_temp_history.append(new_t1)
+        self.body2_temp_history.append(new_t2)
 
         # UI update - the sliders also update the colors (valueChanged)
         self.left_slider.setValue(round(new_t1))
