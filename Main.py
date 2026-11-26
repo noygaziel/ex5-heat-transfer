@@ -36,6 +36,8 @@ class HeatTransfer(QWidget):
         self.time_history = []
         self.body1_temp_history = []
         self.body2_temp_history = []
+        # BONUS: position of the moving "heat pulse" in the connecting bar (0 to 1)
+        self.flow_phase = 0.0
 
         self.setupUI()
 
@@ -186,6 +188,23 @@ class HeatTransfer(QWidget):
         red = int(temperature / 200 * 255)
         self.right_body.setStyleSheet(f"background-color: rgb({red}, 0, 0);")
 
+    def update_flow_animation(self, t1, t2):
+        # BONUS: a bright pulse that moves along the bar from the hot body to the cold body
+        if abs(t1 - t2) < 0.1:
+            self.connector.setStyleSheet("")        # back to the gray bar from style.qss
+            return
+        self.flow_phase = (self.flow_phase + 0.08) % 1.0
+        position = self.flow_phase if t1 > t2 else 1 - self.flow_phase
+        p = min(max(position, 0.02), 0.98)
+        a = max(0.01, p - 0.12)
+        b = min(0.99, p + 0.12)
+        left_color = f"rgb({int(t1 / 200 * 255)}, 0, 0)"
+        right_color = f"rgb({int(t2 / 200 * 255)}, 0, 0)"
+        self.connector.setStyleSheet(
+            f"background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, "
+            f"stop:0 {left_color}, stop:{a:.3f} {left_color}, stop:{p:.3f} #fde047, "
+            f"stop:{b:.3f} {right_color}, stop:1 {right_color}); border-radius: 4px;")
+
     def start_stop_button_method(self):
         if self.start_button.isChecked():
             # pressed - create the bodies from the values on the screen and start
@@ -204,6 +223,7 @@ class HeatTransfer(QWidget):
             # released - stop the simulation
             self.timer.stop()
             self.start_button.setText("Start")
+            self.connector.setStyleSheet("")                 # stop the heat-flow animation
 
     def timer_method(self):
         # physics step - equations from page 1
@@ -229,6 +249,8 @@ class HeatTransfer(QWidget):
         # show the exact value (the slider only holds whole numbers)
         self.left_temp_label.setText(f"{new_t1:.1f} °C")
         self.right_temp_label.setText(f"{new_t2:.1f} °C")
+        # BONUS: move the heat pulse in the connecting bar
+        self.update_flow_animation(new_t1, new_t2)
 
         # BONUS: automatic stop when the temperatures are equal
         if abs(new_t1 - new_t2) < 0.1:
