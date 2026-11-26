@@ -195,7 +195,9 @@ class HeatTransfer(QWidget):
     def update_flow_animation(self, t1, t2):
         # BONUS: a bright pulse that moves along the bar from the hot body to the cold body
         if abs(t1 - t2) < 0.1:
-            self.connector.setStyleSheet("")        # back to the gray bar from style.qss
+            # equal temperatures - the bar gets the same color as the two bodies
+            red = int(t1 / 200 * 255)
+            self.connector.setStyleSheet(f"background-color: rgb({red}, 0, 0); border-radius: 4px;")
             return
         self.flow_phase = (self.flow_phase + 0.08) % 1.0
         position = self.flow_phase if t1 > t2 else 1 - self.flow_phase
@@ -260,6 +262,7 @@ class HeatTransfer(QWidget):
         if abs(new_t1 - new_t2) < 0.1:
             self.start_button.setChecked(False)     # release the toggle button
             self.start_stop_button_method()         # stop the timer + "Start" text
+            self.update_flow_animation(new_t1, new_t2)  # bar in the bodies' color (Stop made it gray)
             self.confetti.start()                   # BONUS: confetti
             self.show_leny()
 
