@@ -46,6 +46,7 @@ class HeatTransfer(QWidget):
         self.left_slider.setRange(0, 200)
         self.left_slider.setValue(200)
         self.left_slider.setFixedHeight(170)
+        self.left_slider.valueChanged.connect(self.left_temperature_changed)
         bodies_row.addWidget(self.left_slider)
 
         # body 1 – a colored rectangle
@@ -89,6 +90,7 @@ class HeatTransfer(QWidget):
         self.right_slider.setRange(0, 200)
         self.right_slider.setValue(0)
         self.right_slider.setFixedHeight(170)
+        self.right_slider.valueChanged.connect(self.right_temperature_changed)
         bodies_row.addWidget(self.right_slider)
 
         main_layout.addLayout(bodies_row)
@@ -149,6 +151,20 @@ class HeatTransfer(QWidget):
         bottom_row.addLayout(right_grid)
 
         main_layout.addLayout(bottom_row)
+
+
+    def left_temperature_changed(self):
+        # update the number and the color while dragging the slider
+        temperature = self.left_slider.value()# return the slider possition - numbers between 0-200
+        self.left_temp_label.setText(f"{temperature:.1f} °C")# write the number
+        red = int(temperature / 200 * 255)# 0 °C = black, 200 °C = full red 
+        self.left_body.setStyleSheet(f"background-color: rgb({red}, 0, 0);")
+
+    def right_temperature_changed(self):
+        temperature = self.right_slider.value()
+        self.right_temp_label.setText(f"{temperature:.1f} °C")
+        red = int(temperature / 200 * 255)
+        self.right_body.setStyleSheet(f"background-color: rgb({red}, 0, 0);")
 
     def create_mass_spin(self):
         # mass must be greater than 0
