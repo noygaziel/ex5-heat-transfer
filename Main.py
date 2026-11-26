@@ -1,7 +1,7 @@
 import sys
 import os
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QPushButton, QLabel, QSlider, QDoubleSpinBox, QFrame,
@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 
 from About import AboutWindow
 from Graph import GraphWindow
+from Body import Body
 
 
 class HeatTransfer(QWidget):
@@ -23,6 +24,12 @@ class HeatTransfer(QWidget):
         self.setWindowTitle("Heat Transfer")
         self.setObjectName("main_window")
         self.resize(760, 460)
+        # simulation variables
+        self.body1 = None
+        self.body2 = None
+        self.time_step = 0.05          # [s]
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.timer_method)
 
         self.setupUI()
 
@@ -122,7 +129,7 @@ class HeatTransfer(QWidget):
         self.start_button.setCheckable(True)          # toggle button – two states
         self.start_button.setCursor(Qt.PointingHandCursor)
         buttons_column.addWidget(self.start_button)
-
+        self.start_button.clicked.connect(self.start_stop_button_method)
         self.graphs_button = QPushButton("Graphs")
         self.graphs_button.setCursor(Qt.PointingHandCursor)
         self.graphs_button.clicked.connect(self.show_graphs)
@@ -165,6 +172,46 @@ class HeatTransfer(QWidget):
         self.right_temp_label.setText(f"{temperature:.1f} °C")
         red = int(temperature / 200 * 255)
         self.right_body.setStyleSheet(f"background-color: rgb({red}, 0, 0);")
+
+
+
+
+    def start_stop_button_method(self):
+        if self.start_button.isChecked():
+            # pressed - create the bodies from the values on the screen and start
+            self.body1 = Body(self.left_mass_spin.value(), self.left_capacity_spin.value(),
+                              self.left_slider.value())
+            self.body2 = Body(self.right_mass_spin.value(), self.right_capacity_spin.value(),
+                              self.right_slider.value())
+            self.start_button.setText("Stop")
+            self.timer.start(int(self.time_step * 1000))   # [ms]
+        else:
+            # released - stop the simulation
+            self.timer.stop()
+            self.start_button.setText("Start")
+
+    def timer_method(self):
+        # physics step - equations from page 1
+        sigma = self.conductivity_spin.value()
+        t1 = self.body1.temperature
+        t2 = self.body2.temperature
+        i1 = sigma * (t2 - t1)          # heat flow into body 1
+        i2 = sigma * (t1 - t2)          # heat flow into body 2
+        q1 = i1 * self.time_step        # ΔQ = I · Δt
+        q2 = i2 * self.time_step
+        new_t1 = self.body1.add_heat(q1)
+        new_t2 = self.body2.add_heat(q2)
+
+        # UI update - the sliders also update the colors (valueChanged)
+        self.left_slider.setValue(round(new_t1))
+        self.right_slider.setValue(round(new_t2))
+        # show the exact value (the slider only holds whole numbers)
+        self.left_temp_label.setText(f"{new_t1:.1f} °C")
+        self.right_temp_label.setText(f"{new_t2:.1f} °C")
+
+
+
+
 
     def create_mass_spin(self):
         # mass must be greater than 0
