@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 )
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 
 
 class GraphWindow(QWidget):
@@ -27,7 +28,12 @@ class GraphWindow(QWidget):
         self.figure = Figure(figsize=(6, 4))
         self.ax = self.figure.add_subplot(111)
         self.canvas = FigureCanvas(self.figure)
-        layout.addWidget(self.canvas, 1)
+        # toolbar (zoom, pan, save picture) above the graph
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        graph_column = QVBoxLayout()
+        graph_column.addWidget(self.toolbar)
+        graph_column.addWidget(self.canvas)
+        layout.addLayout(graph_column, 1)
         self.setup_axes()
 
         # ===== controls on the right =====
