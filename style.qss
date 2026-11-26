@@ -1,0 +1,69 @@
+/* ===== main window ===== */
+QWidget#main_window, QWidget#graph_window {
+    background-color: #f4f6fb;
+    font-family: "Segoe UI";
+    font-size: 13px;
+    color: #1e293b;
+}
+QLabel#title { font-size: 22px; font-weight: 700; color: #0f172a; }
+
+/* ===== the two bodies and the bar between them ===== */
+QFrame#left_body {
+    background-color: #ff0000;
+    border: 2px solid #334155;
+    border-radius: 8px;
+}
+QFrame#right_body {
+    background-color: #000000;
+    border: 2px solid #334155;
+    border-radius: 8px;
+}
+QFrame#connector {
+    background-color: #a8a8a8;
+    border: 1px solid #94a3b8;
+}
+
+/* ===== read-only temperature display ===== */
+QLabel#temp_display {
+    background-color: #e2e8f0;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 8px;
+    min-width: 80px;
+    qproperty-alignment: AlignCenter;
+}
+
+/* ===== number fields ===== */
+QDoubleSpinBox {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 3px 6px;
+    min-width: 90px;
+}
+
+/* ===== buttons ===== */
+QPushButton {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 7px 16px;
+}
+QPushButton:hover   { background-color: #e2e8f0; }
+QPushButton:pressed { background-color: #cbd5e1; }
+
+/* start button – green when off, red when on (toggle) */
+QPushButton#start_button { color: #15803d; font-weight: 600; }
+QPushButton#start_button:checked {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+/* ===== combo box ===== */
+QComboBox {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 8px;
+}
