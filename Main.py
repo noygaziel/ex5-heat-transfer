@@ -5,13 +5,17 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QPushButton, QLabel, QSlider, QDoubleSpinBox, QFrame,
+    QPushButton, QLabel, QSlider, QDoubleSpinBox, QFrame, QComboBox,
 )
 
 from About import AboutWindow
 from Graph import GraphWindow
 from Body import Body
 from Confetti import ConfettiWidget
+
+# BONUS: materials and their specific heat capacity [kJ/kg°C] ("Custom" = type it by hand)
+MATERIALS = {"Custom": None, "Copper": 0.385, "Aluminum": 0.897, "Iron": 0.449,
+             "Gold": 0.129, "Glass": 0.840, "Water": 4.186}
 
 
 class HeatTransfer(QWidget):
@@ -25,7 +29,7 @@ class HeatTransfer(QWidget):
 
         self.setWindowTitle("Heat Transfer")
         self.setObjectName("main_window")
-        self.resize(760, 460)
+        self.resize(760, 500)
         # simulation variables
         self.body1 = None
         self.body2 = None
@@ -63,13 +67,25 @@ class HeatTransfer(QWidget):
         self.left_slider.setValue(200)
         self.left_slider.setFixedHeight(170)
         self.left_slider.valueChanged.connect(self.left_temperature_changed)
-        bodies_row.addWidget(self.left_slider)
+        bodies_row.addWidget(self.left_slider, alignment=Qt.AlignBottom)
 
-        # body 1 – a colored rectangle
+        # body 1 – material selection above a colored rectangle
+        left_body_column = QVBoxLayout()
+        left_body_column.setSpacing(4)
+        left_body_column.addStretch()
+        left_material_label = QLabel("Material")
+        left_material_label.setAlignment(Qt.AlignCenter)
+        left_body_column.addWidget(left_material_label)
+        self.left_material_combo = QComboBox()
+        self.left_material_combo.addItems(MATERIALS.keys())
+        self.left_material_combo.setFixedWidth(130)
+        left_body_column.addWidget(self.left_material_combo)
+
         self.left_body = QFrame()
         self.left_body.setObjectName("left_body")
         self.left_body.setFixedSize(130, 170)
-        bodies_row.addWidget(self.left_body)
+        left_body_column.addWidget(self.left_body)
+        bodies_row.addLayout(left_body_column)
 
         # middle: conductivity above the connecting bar
         middle_column = QVBoxLayout()
@@ -83,7 +99,7 @@ class HeatTransfer(QWidget):
         self.conductivity_spin.setValue(1.00)
         self.conductivity_spin.setDecimals(2)
         self.conductivity_spin.setSingleStep(0.1)
-        self.conductivity_spin.setSuffix(" J/s°C")
+        self.conductivity_spin.setSuffix(" kW/°C")
         self.conductivity_spin.setFixedWidth(130)
         middle_column.addWidget(self.conductivity_spin, alignment=Qt.AlignCenter)
 
@@ -95,11 +111,23 @@ class HeatTransfer(QWidget):
         middle_column.addStretch()
         bodies_row.addLayout(middle_column, 1)
 
-        # body 2
+        # body 2 – material selection above a colored rectangle
+        right_body_column = QVBoxLayout()
+        right_body_column.setSpacing(4)
+        right_body_column.addStretch()
+        right_material_label = QLabel("Material")
+        right_material_label.setAlignment(Qt.AlignCenter)
+        right_body_column.addWidget(right_material_label)
+        self.right_material_combo = QComboBox()
+        self.right_material_combo.addItems(MATERIALS.keys())
+        self.right_material_combo.setFixedWidth(130)
+        right_body_column.addWidget(self.right_material_combo)
+
         self.right_body = QFrame()
         self.right_body.setObjectName("right_body")
         self.right_body.setFixedSize(130, 170)
-        bodies_row.addWidget(self.right_body)
+        right_body_column.addWidget(self.right_body)
+        bodies_row.addLayout(right_body_column)
 
         # right temperature slider
         self.right_slider = QSlider(Qt.Vertical)
@@ -107,7 +135,7 @@ class HeatTransfer(QWidget):
         self.right_slider.setValue(0)
         self.right_slider.setFixedHeight(170)
         self.right_slider.valueChanged.connect(self.right_temperature_changed)
-        bodies_row.addWidget(self.right_slider)
+        bodies_row.addWidget(self.right_slider, alignment=Qt.AlignBottom)
 
         main_layout.addLayout(bodies_row)
 
@@ -168,6 +196,10 @@ class HeatTransfer(QWidget):
 
         main_layout.addLayout(bottom_row)
 
+        # BONUS: choosing a material fills in its heat capacity
+        self.left_material_combo.currentTextChanged.connect(self.left_material_changed)
+        self.right_material_combo.currentTextChanged.connect(self.right_material_changed)
+
         # BONUS: confetti layer (hidden until the temperatures are equal)
         self.confetti = ConfettiWidget(self)
 
@@ -191,6 +223,23 @@ class HeatTransfer(QWidget):
         self.right_temp_label.setText(f"{temperature:.1f} °C")
         red = int(temperature / 200 * 255)
         self.right_body.setStyleSheet(f"background-color: rgb({red}, 0, 0);")
+
+    def left_material_changed(self, material):
+        # BONUS: fill in the heat capacity of the chosen material ("Custom" changes nothing)
+        if MATERIALS[material] is not None:
+            self.left_capacity_spin.setValue(MATERIALS[material])
+
+    def right_material_changed(self, material):
+        if MATERIALS[material] is not None:
+            self.right_capacity_spin.setValue(MATERIALS[material])
+
+    def set_inputs_enabled(self, enabled):
+        # BONUS: lock the inputs while the simulation runs (choose them before each simulation)
+        for widget in [self.left_material_combo, self.right_material_combo,
+                       self.left_slider, self.right_slider,
+                       self.left_mass_spin, self.right_mass_spin,
+                       self.left_capacity_spin, self.right_capacity_spin]:
+            widget.setEnabled(enabled)
 
     def update_flow_animation(self, t1, t2):
         # BONUS: a bright pulse that moves along the bar from the hot body to the cold body
@@ -224,11 +273,13 @@ class HeatTransfer(QWidget):
             self.body1_temp_history = [self.body1.temperature]
             self.body2_temp_history = [self.body2.temperature]
             self.start_button.setText("Stop")
+            self.set_inputs_enabled(False)
             self.timer.start(int(self.time_step * 1000))   # [ms]
         else:
             # released - stop the simulation
             self.timer.stop()
             self.start_button.setText("Start")
+            self.set_inputs_enabled(True)
             self.connector.setStyleSheet("")                 # stop the heat-flow animation
 
     def timer_method(self):
@@ -289,9 +340,9 @@ class HeatTransfer(QWidget):
         spin = QDoubleSpinBox()
         spin.setRange(0.01, 5000.0)
         spin.setValue(0.40)
-        spin.setDecimals(2)
+        spin.setDecimals(3)
         spin.setSingleStep(0.1)
-        spin.setSuffix(" J/kg°C")
+        spin.setSuffix(" kJ/kg°C")
         return spin
 
     def show_about(self):
