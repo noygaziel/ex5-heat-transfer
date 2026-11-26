@@ -2,6 +2,7 @@ import sys
 import os
 
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QPushButton, QLabel, QSlider, QDoubleSpinBox, QFrame,
@@ -159,6 +160,13 @@ class HeatTransfer(QWidget):
 
         main_layout.addLayout(bottom_row)
 
+        # BONUS: picture that pops up when the temperatures are equal (hidden for now)
+        self.leny_label = QLabel(self)
+        leny_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "leny.webp")
+        self.leny_label.setPixmap(QPixmap(leny_path).scaled(250, 250, Qt.KeepAspectRatio,
+                                                            Qt.SmoothTransformation))
+        self.leny_label.adjustSize()
+        self.leny_label.hide()
 
     def left_temperature_changed(self):
         # update the number and the color while dragging the slider
@@ -172,9 +180,6 @@ class HeatTransfer(QWidget):
         self.right_temp_label.setText(f"{temperature:.1f} °C")
         red = int(temperature / 200 * 255)
         self.right_body.setStyleSheet(f"background-color: rgb({red}, 0, 0);")
-
-
-
 
     def start_stop_button_method(self):
         if self.start_button.isChecked():
@@ -209,9 +214,20 @@ class HeatTransfer(QWidget):
         self.left_temp_label.setText(f"{new_t1:.1f} °C")
         self.right_temp_label.setText(f"{new_t2:.1f} °C")
 
+        # BONUS: automatic stop when the temperatures are equal
+        if abs(new_t1 - new_t2) < 0.1:
+            self.start_button.setChecked(False)     # release the toggle button
+            self.start_stop_button_method()         # stop the timer + "Start" text
+            self.show_leny()
 
-
-
+    def show_leny(self):
+        # put the picture in the middle of the window for 3 seconds
+        x = (self.width() - self.leny_label.width()) // 2
+        y = (self.height() - self.leny_label.height()) // 2
+        self.leny_label.move(x, y)
+        self.leny_label.raise_()                    # on top of everything
+        self.leny_label.show()
+        QTimer.singleShot(3000, self.leny_label.hide)
 
     def create_mass_spin(self):
         # mass must be greater than 0
