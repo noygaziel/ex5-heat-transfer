@@ -3,12 +3,16 @@ class Body:
 
     def __init__(self, mass, heat_capacity, temperature):
 
+        # check that the values make physical sense, otherwise use a safe default
         if mass <= 0:
-            print("Error: mass must be greater than 0")
+            print("Mass must be greater than 0, using 1 kg")
+            mass = 1
         if heat_capacity <= 0:
-            print("Error: heat capacity must be greater than 0")
+            print("Heat capacity must be greater than 0, using 1 J/kg°C")
+            heat_capacity = 1
         if temperature < 0:
-            print("Error: temperature must be 0 or higher")
+            print("Temperature must be 0 or higher, using 0 °C")
+            temperature = 0
 
         self.mass = mass                    # [kg]
         self.heat_capacity = heat_capacity  # [J/kg°C]
