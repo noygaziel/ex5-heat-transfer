@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 from About import AboutWindow
 from Graph import GraphWindow
 from Body import Body
+from Confetti import ConfettiWidget
 
 
 class HeatTransfer(QWidget):
@@ -167,6 +168,9 @@ class HeatTransfer(QWidget):
 
         main_layout.addLayout(bottom_row)
 
+        # BONUS: confetti layer (hidden until the temperatures are equal)
+        self.confetti = ConfettiWidget(self)
+
         # BONUS: picture that pops up when the temperatures are equal (hidden for now)
         self.leny_label = QLabel(self)
         leny_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "leny.webp")
@@ -256,6 +260,7 @@ class HeatTransfer(QWidget):
         if abs(new_t1 - new_t2) < 0.1:
             self.start_button.setChecked(False)     # release the toggle button
             self.start_stop_button_method()         # stop the timer + "Start" text
+            self.confetti.start()                   # BONUS: confetti
             self.show_leny()
 
     def show_leny(self):
